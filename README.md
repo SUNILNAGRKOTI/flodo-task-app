@@ -11,42 +11,16 @@ and a polished mobile experience.
 <div align="center">
 
 ### Main Features
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="Screenshot/Home_Page_Flodo.jpeg" alt="Home Page" width="250"/>
-      <br>
-      <strong>Home Page</strong>
-      <br>Task list with drag-and-drop
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshot/New_task_Flodo.jpeg" alt="Create Task" width="250"/>
-      <br>
-      <strong>Create Task</strong>
-      <br>Add new tasks with details
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshot/Search_Flodo.jpeg" alt="Search" width="250"/>
-      <br>
-      <strong>Search & Filter</strong>
-      <br>Find tasks quickly
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="33%">
-      <img src="Screenshot/Locked_page_Flodo.jpeg" alt="Blocked Tasks" width="250"/>
-      <br>
-      <strong>Blocked Tasks</strong>
-      <br>Task dependency management
-    </td>
-    <td align="center" width="33%">
-      <img src="Screenshot/Dark_Mode_Flodo.jpeg" alt="Dark Mode" width="250"/>
-      <br>
-      <strong>Dark Mode</strong>
-      <br>Beautiful dark theme
-    </td>
-  </tr>
-</table>
+
+<img src="Screenshot/Home_Page_Flodo.jpeg" alt="Home Page" width="200"/>
+<img src="Screenshot/New_task_Flodo.jpeg" alt="Create Task" width="200"/>
+<img src="Screenshot/Search_Flodo.jpeg" alt="Search" width="200"/>
+<img src="Screenshot/Locked_page_Flodo.jpeg" alt="Blocked Tasks" width="200"/>
+<img src="Screenshot/Dark_Mode_Flodo.jpeg" alt="Dark Mode" width="200"/>
+
+| Home Page | Create Task | Search & Filter | Blocked Tasks | Dark Mode |
+|:---------:|:----------:|:---------------:|:-------------:|:---------:|
+| Task list with drag-and-drop | Add new tasks with details | Find tasks quickly | Task dependency management | Beautiful dark theme |
 
 </div>
 
