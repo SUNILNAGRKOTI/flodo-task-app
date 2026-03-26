@@ -62,9 +62,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
       _blockedById = null;
     }
 
-    // Restore draft (title/description auto-save, plus other fields).
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // BUG 1 fix: In edit mode, never restore draft over the provided task.
       final restored = !isEdit ? await _draftController.loadDraft() : null;
 
       if (!mounted) return;
@@ -81,14 +79,12 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
         _blockedById = restored.blockedById;
       }
 
-      // Ensure the provider matches current form values so swipe-back saves correctly.
       _draftController.setDueDate(_dueDate);
       _draftController.setStatus(_status);
       _draftController.setBlockedById(_blockedById);
       _draftController.setTitle(_titleController.text);
       _draftController.setDescription(_descriptionController.text);
       setState(() {
-        // Initial load/restoration should not count as user edits.
         _isDirty = false;
       });
     });
@@ -147,6 +143,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
               ),
             ),
             data: (tasks) {
+              // Build blocked by options
               final blockedOptions = <DropdownMenuItem<int?>>[];
               blockedOptions.add(
                 const DropdownMenuItem<int?>(
@@ -167,6 +164,13 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
                 );
               }
 
+              // FIX: make sure _blockedById value exists in options
+              // If not found in list, reset to null to avoid crash
+              final safeBlockedById = blockedOptions
+                  .any((item) => item.value == _blockedById)
+                  ? _blockedById
+                  : null;
+
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -177,9 +181,9 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
                       controller: _titleController,
                       textInputAction: TextInputAction.next,
                       keyboardType: _titleInputType,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Title',
-                        border: const OutlineInputBorder(),
+                        border: OutlineInputBorder(),
                         hintText: 'Task title',
                       ),
                       style: const TextStyle(
@@ -280,9 +284,9 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
                     ),
                     const SizedBox(height: 12),
 
-                    // Blocked By
+                    // Blocked By — uses safeBlockedById to prevent crash
                     DropdownButtonFormField<int?>(
-                      value: _blockedById,
+                      value: safeBlockedById,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'Blocked By',
@@ -305,7 +309,8 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding:
+                          const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -313,102 +318,112 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
                         onPressed: _submitting
                             ? null
                             : () async {
-                                final title = _titleController.text.trim();
-                                if (title.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Title is required'),
-                                    ),
-                                  );
-                                  return;
-                                }
+                          final title =
+                          _titleController.text.trim();
+                          if (title.isEmpty) {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              const SnackBar(
+                                content: Text('Title is required'),
+                              ),
+                            );
+                            return;
+                          }
 
-                                setState(() => _submitting = true);
-                                try {
-                                  await Future.delayed(
-                                    const Duration(seconds: 2),
-                                  );
+                          setState(() => _submitting = true);
+                          try {
+                            await Future.delayed(
+                              const Duration(seconds: 2),
+                            );
 
-                                  final repo = ref.read(taskRepositoryProvider);
+                            final repo =
+                            ref.read(taskRepositoryProvider);
 
-                                  if (widget.task == null) {
-                                    final all = await repo.getAllTasks();
-                                    final nextSortOrder = all.isEmpty
-                                        ? 0
-                                        : all
-                                                .map((t) => t.sortOrder)
-                                                .reduce((a, b) =>
-                                                    a > b ? a : b) +
-                                            1;
+                            if (widget.task == null) {
+                              final all = await repo.getAllTasks();
+                              final nextSortOrder = all.isEmpty
+                                  ? 0
+                                  : all
+                                  .map((t) => t.sortOrder)
+                                  .reduce((a, b) =>
+                              a > b ? a : b) +
+                                  1;
 
-                                    final newTask = TaskModel(
-                                      title: _titleController.text.trim(),
-                                      description:
-                                          _descriptionController.text.trim(),
-                                      dueDate: _dueDate,
-                                      status: _status,
-                                      blockedById: _blockedById,
-                                      sortOrder: nextSortOrder,
-                                      createdAt: DateTime.now(),
-                                    );
+                              final newTask = TaskModel(
+                                title: _titleController.text
+                                    .trim(),
+                                description: _descriptionController
+                                    .text
+                                    .trim(),
+                                dueDate: _dueDate,
+                                status: _status,
+                                blockedById: _blockedById,
+                                sortOrder: nextSortOrder,
+                                createdAt: DateTime.now(),
+                              );
 
-                                    await repo.createTask(newTask);
-                                  } else {
-                                    final updated = widget.task!.copyWith(
-                                      title: _titleController.text.trim(),
-                                      description:
-                                          _descriptionController.text.trim(),
-                                      dueDate: _dueDate,
-                                      status: _status,
-                                      blockedById: _blockedById,
-                                      sortOrder: widget.task!.sortOrder,
-                                      createdAt: widget.task!.createdAt,
-                                    );
-                                    await repo.updateTask(updated);
-                                  }
+                              await repo.createTask(newTask);
+                            } else {
+                              final updated =
+                              widget.task!.copyWith(
+                                title: _titleController.text
+                                    .trim(),
+                                description: _descriptionController
+                                    .text
+                                    .trim(),
+                                dueDate: _dueDate,
+                                status: _status,
+                                blockedById: _blockedById,
+                                sortOrder: widget.task!.sortOrder,
+                                createdAt: widget.task!.createdAt,
+                              );
+                              await repo.updateTask(updated);
+                            }
 
-                                  await notifier.clearDraft();
-                                  _draftCleared = true;
-                                  _isDirty = false;
+                            await notifier.clearDraft();
+                            _draftCleared = true;
+                            _isDirty = false;
 
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        widget.task == null
-                                            ? 'Task created'
-                                            : 'Task updated',
-                                      ),
-                                    ),
-                                  );
-                                  context.pop();
-                                } finally {
-                                  if (mounted) {
-                                    setState(() => _submitting = false);
-                                  }
-                                }
-                              },
-                        child: _submitting
-                            ? const Center(
-                                child: SizedBox(
-                                  height: 18,
-                                  width: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    valueColor:
-                                        AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : const Text(
-                                'Save',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  widget.task == null
+                                      ? 'Task created'
+                                      : 'Task updated',
                                 ),
                               ),
+                            );
+                            context.pop();
+                          } finally {
+                            if (mounted) {
+                              setState(
+                                      () => _submitting = false);
+                            }
+                          }
+                        },
+                        child: _submitting
+                            ? const Center(
+                          child: SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor:
+                              AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          ),
+                        )
+                            : const Text(
+                          'Save',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -425,11 +440,8 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
   Future<void> _handleBackRequest() async {
     if (!mounted) return;
     if (_draftCleared) return;
-
-    // If we're already handling a pop, ignore any duplicate callbacks.
     if (_handlingPop) return;
 
-    // If there are no edits, just save the draft and go back.
     if (!_isDirty) {
       unawaited(_draftController.saveDraft());
       if (!mounted) return;
@@ -506,4 +518,3 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen>
     return '$y-$m-$day';
   }
 }
-
